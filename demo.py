@@ -328,5 +328,6 @@ r = requests.put(Config.AZURE_SEARCH_ENDPOINT + "/indexers/" + Config.INDEXER_NA
 print(r)
 print(r.status_code)
 print(r.ok)
- 
+
+
  

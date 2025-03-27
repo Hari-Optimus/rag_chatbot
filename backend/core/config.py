@@ -23,4 +23,8 @@ class Config:
     INDEX_NAME = os.getenv("INDEX_NAME")
     SKILLSET_NAME = os.getenv("SKILLSET_NAME")
     INDEXER_NAME = os.getenv("INDEXER_NAME")
+    COSMOS_DB_URI = os.getenv("COSMOS_DB_URI")
+    COSMOS_DB_KEY = os.getenv("COSMOS_DB_KEY")
+    COSMOS_DB_DATABASE = os.getenv("COSMOS_DB_DATABASE")
+    COSMOS_DB_CONTAINER = os.getenv("COSMOS_DB_CONTAINER")
    

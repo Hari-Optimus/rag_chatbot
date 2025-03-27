@@ -88,35 +88,46 @@ def handle_query(user_query):
     return documents
 
 
-def generate_llm_response(query, documents):
+def generate_llm_response(user_query,previous_messages, documents):
     """Use Azure OpenAI to generate a response based on retrieved policy documents"""
     if not documents:
         return "I couldn't find relevant policy information."
 
-    context = "\n".join([f"{doc['title']}: {doc['chunk']}" for doc in documents])
+       # Build the conversation history prompt
+    conversation_history = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in previous_messages])
     
-    # Now adjust prompts for policy-specific queries
-    prompt = f"""
-    You are a legal assistant trained to understand and provide information from policy documents. 
+    # Add the current query to the conversation history
+    # conversation_history += f"\nUser: {user_query}"
+    
+    # If we have documents, we can use them as context in the LLM prompt
+    if documents:
+        context = "\n".join([f"{doc['title']}: {doc['chunk']}" for doc in documents])
+        context = f"Context from relevant documents:\n{context}\n"
+    else:
+        context = ""
 
-    Context:
+    # Construct the prompt for the LLM
+    prompt = f"""
+    Conversation so far:
+    {conversation_history}
+
     {context}
 
-    Question: {query}
+    Question: {user_query}
 
-    - Answer the question based on the provided context. 
-    - If the question is unrelated to the context, reply: "I couldn't find relevant information."
+    - Provide a clear, concise, and relevant answer based on the above context.
+    - If the question is unrelated to the context, respond with: "I couldn't find relevant information."
     """
-    print(prompt)
-
+    print(prompt+"Prompt")
+    # Use the Azure OpenAI model to generate a response
     response = openai_client.chat.completions.create(
-        model="gpt-4o",  # You might choose a different model if needed
+        model="gpt-4o",  # You can choose a different model if required
         messages=[
-            {"role": "system", "content": "You are a legal assistant trained on policy documents."},
+            {"role": "system", "content": "You are a Policy assistant trained on policy documents."},
             {"role": "user", "content": prompt}
         ],
-        max_tokens=300 # Adjust max_tokens based on expected answer length
+        max_tokens=300  # Adjust max_tokens based on expected answer length
     )
-
+    
     return response.choices[0].message.content
 

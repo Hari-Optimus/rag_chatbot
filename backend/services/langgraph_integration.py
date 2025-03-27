@@ -20,7 +20,7 @@ def generate_embedding_node(state: GraphState):
     print(f"generate_embedding_node - user_query: {user_query}")  # Debug
 
     embedding = generate_embedding(user_query)  # Generate embedding using user_query
-    print(embedding)
+    # print(embedding)
     if embedding:
         # Ensure we persist user_query and add the embedding to state
         state['keys']["embedding"] = embedding
@@ -49,12 +49,16 @@ def cognitive_search_node(state: GraphState):
 # Node to generate LLM response
 def llm_response_node(state: GraphState):
     """Generate the final LLM response."""
-    user_query = state['keys'].get("user_query")  # Ensure user_query is preserved
+    user_query = state['keys'].get("user_query")
+   
+    # user_query = state['keys'].get("user_query")  # Ensure user_query is preserved
     if user_query is None:
         return {"keys": {"response": "Error: No query provided."}}  # Return error if query is None
     
     documents = state['keys'].get("documents")
-    response = generate_llm_response(user_query, documents)
+    previous_messages = state['keys'].get("previous_messages", [])
+
+    response = generate_llm_response(user_query,previous_messages, documents)
     
     # Persist user_query in state
     state['keys']["user_query"] = user_query
@@ -82,25 +86,23 @@ def build_chatbot_graph():
 
 
 # Run the LangGraph flow for the chatbot
-def chatbot_response(user_query, threshold=0.7):
+def chatbot_response(user_query: str, context: str = "", previous_messages: list = [], threshold: float = 0.7):
     """Run the LangGraph flow for the chatbot"""
     graph = build_chatbot_graph()
 
-    # Create input data for the flow
+    # Add context and previous messages to the flow
     input_data = {
         "keys": {
             "user_query": user_query,
+            "context": context,
+            "previous_messages": previous_messages,
             "threshold": threshold
         }
     }
 
     # Execute the flow
     result = graph.invoke(input_data)
-    print(f"Final Result: {result}")  # Debug to see final result
 
-    # Extract the final response
+    # Extract and return the response
     response = result.get('keys', {}).get('response')
-    if response:
-        return {"answer": response}
-    else:
-        return {"error": "Something went wrong in the flow."}
+    return {"answer": response if response else "Error: No response generated."}
